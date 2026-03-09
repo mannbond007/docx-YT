@@ -14,7 +14,7 @@ const convertDocxToHtml = async (buffer) => {
 
   const result = await mammoth.convertToHtml({ buffer });
 
-  if (result.messages?.length) {
+  if (result.messages && result.messages.length) {
     result.messages.forEach(msg => {
       logger.warn(`Mammoth warning: ${msg.message}`);
     });
@@ -33,7 +33,7 @@ const convertDocxToHtml = async (buffer) => {
 
 
 /**
- * Wrap HTML into full document
+ * Wrap HTML into styled document
  */
 const buildStyledDocument = (bodyHtml, originalName) => `<!DOCTYPE html>
 <html lang="en">
@@ -109,21 +109,18 @@ const convertHtmlToPdf = async (html) => {
   try {
 
     browser = await puppeteer.launch({
-
-      headless: "new",
-
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
-
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox"
       ]
-
     });
 
     const page = await browser.newPage();
 
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.setContent(html, {
+      waitUntil: "networkidle0"
+    });
 
     const pdfBuffer = await page.pdf({
       format: "A4",
