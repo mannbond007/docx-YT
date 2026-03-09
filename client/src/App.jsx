@@ -10,7 +10,7 @@ const App = () => (
     {/* ── Navigation ─────────────────────────────────────────────────── */}
     <nav className="navbar" role="navigation" aria-label="Main navigation">
       <div className="navbar__brand">
-        <span className="navbar__logo">⬡</span>
+        <span className="navbar__logo">📝</span>
         <span className="navbar__name">DocuShift</span>
       </div>
       <span className="navbar__tagline">DOCX → PDF Converter</span>
