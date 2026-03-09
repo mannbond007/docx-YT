@@ -4,15 +4,17 @@ const mammoth = require('mammoth');
 const puppeteer = require('puppeteer');
 const logger = require('../utils/logger');
 
+
 /**
- * Converts a DOCX buffer to HTML using mammoth
+ * Convert DOCX → HTML
  */
 const convertDocxToHtml = async (buffer) => {
+
   logger.info('Starting DOCX → HTML conversion');
 
   const result = await mammoth.convertToHtml({ buffer });
 
-  if (result.messages && result.messages.length) {
+  if (result.messages?.length) {
     result.messages.forEach(msg => {
       logger.warn(`Mammoth warning: ${msg.message}`);
     });
@@ -25,91 +27,66 @@ const convertDocxToHtml = async (buffer) => {
   }
 
   logger.info('DOCX → HTML conversion successful');
+
   return result.value;
 };
 
 
 /**
- * Wrap HTML inside a styled document
+ * Wrap HTML into full document
  */
 const buildStyledDocument = (bodyHtml, originalName) => `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>${originalName}</title>
 
 <style>
-*, *::before, *::after { box-sizing: border-box; }
-
-@page { margin: 2.5cm 2cm; }
+*,*::before,*::after{box-sizing:border-box}
+@page{margin:2.5cm 2cm}
 
 body{
-  font-family:'Segoe UI',Calibri,Arial,sans-serif;
-  font-size:11pt;
-  line-height:1.6;
-  color:#1a1a1a;
-  background:#fff;
+font-family:'Segoe UI',Calibri,Arial,sans-serif;
+font-size:11pt;
+line-height:1.6;
+color:#1a1a1a;
+background:#fff
 }
 
-h1,h2,h3,h4,h5,h6{
-  font-weight:600;
-  margin:1.2em 0 0.4em;
-}
+h1,h2,h3,h4,h5,h6{font-weight:600;margin:1.2em 0 .4em}
+h1{font-size:2em;border-bottom:2px solid #333;padding-bottom:.2em}
+h2{font-size:1.6em;border-bottom:1px solid #ccc;padding-bottom:.1em}
 
-h1{font-size:2em;border-bottom:2px solid #333;padding-bottom:0.2em;}
-h2{font-size:1.6em;border-bottom:1px solid #ccc;padding-bottom:0.1em;}
+p{margin:0 0 .8em}
 
-p{margin:0 0 0.8em;}
+table{width:100%;border-collapse:collapse;margin-bottom:1em}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-bottom:1em;
-}
+th,td{border:1px solid #bbb;padding:8px 12px;text-align:left}
 
-th,td{
-  border:1px solid #bbb;
-  padding:8px 12px;
-  text-align:left;
-}
+th{background:#f0f0f0;font-weight:600}
 
-th{
-  background:#f0f0f0;
-  font-weight:600;
-}
-
-img{
-  max-width:100%;
-  height:auto;
-  display:block;
-  margin:0.5em auto;
-}
+img{max-width:100%;height:auto;display:block;margin:.5em auto}
 
 pre,code{
-  font-family:'Courier New',monospace;
-  font-size:10pt;
-  background:#f6f6f6;
-  padding:2px 4px;
-  border-radius:3px;
+font-family:'Courier New',monospace;
+font-size:10pt;
+background:#f6f6f6;
+padding:2px 4px;
+border-radius:3px
 }
 
-pre{
-  padding:1em;
-  overflow-x:auto;
-}
+pre{padding:1em;overflow-x:auto}
 
-ul,ol{
-  margin:0 0 0.8em 1.5em;
-}
+ul,ol{margin:0 0 .8em 1.5em}
 
-a{color:#2563eb;}
+a{color:#2563eb}
 
 blockquote{
-  border-left:4px solid #cbd5e1;
-  margin:0;
-  padding:0.5em 1em;
-  color:#555;
+border-left:4px solid #cbd5e1;
+margin:0;
+padding:.5em 1em;
+color:#555
 }
 </style>
 
@@ -132,18 +109,21 @@ const convertHtmlToPdf = async (html) => {
   try {
 
     browser = await puppeteer.launch({
+
       headless: "new",
+
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox"
       ]
+
     });
 
     const page = await browser.newPage();
 
-    await page.setContent(html, {
-      waitUntil: "networkidle0"
-    });
+    await page.setContent(html, { waitUntil: "networkidle0" });
 
     const pdfBuffer = await page.pdf({
       format: "A4",
@@ -175,6 +155,7 @@ const convertHtmlToPdf = async (html) => {
   }
 
 };
+
 
 module.exports = {
   convertDocxToHtml,
