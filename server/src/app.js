@@ -8,46 +8,49 @@ const logger = require('./utils/logger');
 const converterRoutes = require('./routes/converter.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 
-/**
- * Creates and configures the Express application.
- * Separated from server.js to allow clean unit testing.
- */
 const createApp = () => {
   const app = express();
 
-  // ─── Security Headers ───────────────────────────────────────────────────────
+  // ─── Security Headers ─────────────────────────────────────
   app.use(helmet());
 
-  // ─── CORS ───────────────────────────────────────────────────────────────────
+  // ─── CORS Configuration ───────────────────────────────────
+  const allowedOrigins = [
+    "https://docx-yt.vercel.app",
+    "http://localhost:5173"
+  ];
+
   const corsOptions = {
     origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman, same-origin)
-      if (!origin || config.allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         logger.warn(`CORS blocked request from origin: ${origin}`);
         callback(new Error(`CORS policy: origin "${origin}" is not allowed.`));
       }
     },
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Content-Disposition', 'X-Conversion-Duration-Ms'],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Content-Disposition", "X-Conversion-Duration-Ms"],
     credentials: false,
   };
+
   app.use(cors(corsOptions));
 
-  // ─── Body Parsing ────────────────────────────────────────────────────────────
-  // Note: multer handles multipart/form-data; these parsers handle JSON/URL-encoded
+  // VERY IMPORTANT → allow preflight
+  app.options('*', cors(corsOptions));
+
+  // ─── Body Parsing ─────────────────────────────────────────
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
 
-  // ─── Request Logging ────────────────────────────────────────────────────────
+  // ─── Request Logging ──────────────────────────────────────
   app.use((req, _res, next) => {
     logger.info(`→ ${req.method} ${req.originalUrl} [${req.ip}]`);
     next();
   });
 
-  // ─── Health Check ────────────────────────────────────────────────────────────
+  // ─── Health Check ─────────────────────────────────────────
   app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'ok',
@@ -56,10 +59,10 @@ const createApp = () => {
     });
   });
 
-  // ─── API Routes ──────────────────────────────────────────────────────────────
+  // ─── API Routes ───────────────────────────────────────────
   app.use('/api/v1', converterRoutes);
 
-  // ─── 404 Handler ────────────────────────────────────────────────────────────
+  // ─── 404 Handler ──────────────────────────────────────────
   app.use((req, res) => {
     res.status(404).json({
       success: false,
@@ -67,7 +70,7 @@ const createApp = () => {
     });
   });
 
-  // ─── Centralized Error Handler (must be last) ────────────────────────────────
+  // ─── Centralized Error Handler ────────────────────────────
   app.use(errorHandler);
 
   return app;
